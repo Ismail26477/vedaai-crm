@@ -34,7 +34,7 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # ADMIN credentials (use env vars in production)
 ADMIN_USER = os.environ.get('ADMIN_USER', 'admin')
-ADMIN_PASS = os.environ.get('ADMIN_PASS', 'password')
+ADMIN_PASS = os.environ.get('ADMIN_PASS', 'admin123')
 
 # -----------------------
 # Mongo config (env vars)
@@ -2354,3 +2354,4 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', '1') == '1'
     # On Windows the watchdog reloader can cause OSError 10038; disable the reloader to avoid crashes.
     app.run(host='0.0.0.0', port=port, debug=debug_mode, use_reloader=False)
+
