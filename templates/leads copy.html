@@ -1,0 +1,446 @@
+{% extends 'index.html' %}
+{% block title %}Dashboard - CRM Pro{% endblock %}
+{% block content %}
+    <title>Leads Management - CRM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/leads.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header"> 
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Leads Management</h1>
+                    <p class="subtitle">Manage and track all your leads in one place</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-icon" onclick="toggleView('grid')" id="gridViewBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </button>
+                    <button class="btn-icon active" onclick="toggleView('list')" id="listViewBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </button>
+                    <button class="btn-primary" onclick="openAddLeadModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add New Lead
+                    </button>
+                    <button class="btn-secondary" onclick="exportLeads()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Total Leads</div>
+                        <div class="stat-value" id="totalLeads">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">New Today</div>
+                        <div class="stat-value" id="newToday">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Hot Leads</div>
+                        <div class="stat-value" id="hotLeads">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Total Value</div>
+                        <div class="stat-value" id="totalValue">$0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="filters-bar">
+                <div class="search-box">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search leads by name, company, or contact..." oninput="filterLeads()">
+                </div>
+
+                <div class="filter-group">
+                    <label>Stage:</label>
+                    <select id="filterStage" onchange="filterLeads()">
+                        <option value="">All Stages</option>
+                        <option value="New Lead">New Lead</option>
+                        <option value="Qualified">Qualified</option>
+                        <option value="Proposal">Proposal</option>
+                        <option value="Negotiation">Negotiation</option>
+                        <option value="Closed Won">Closed Won</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Source:</label>
+                    <select id="filterSource" onchange="filterLeads()">
+                        <option value="">All Sources</option>
+                        <option value="Website Form">Website Form</option>
+                        <option value="Meta Ads">Meta Ads</option>
+                        <option value="Google Ads">Google Ads</option>
+                        <option value="Google Sheet">Google Sheet</option>
+                        <option value="External API">External API</option>
+                        <option value="Manual Entry">Manual Entry</option>
+                        <option value="Referral">Referral</option>
+                        <option value="Cold Outreach">Cold Outreach</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Priority:</label>
+                    <select id="filterPriority" onchange="filterLeads()">
+                        <option value="">All Priorities</option>
+                        <option value="Hot">Hot</option>
+                        <option value="Warm">Warm</option>
+                        <option value="Cold">Cold</option>
+                    </select>
+                </div>
+
+                <button class="btn-icon" onclick="clearFilters()" title="Clear Filters">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- List View -->
+            <div id="listView" class="leads-table-container">
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th onclick="sortTable('name')">
+                                Lead Name
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th onclick="sortTable('company')">
+                                Company
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th onclick="sortTable('contact')">
+                                Contact
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th onclick="sortTable('value')">
+                                Value
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th>Stage</th>
+                            <th>Source</th>
+                            <th>Priority</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTableBody">
+                    </tbody>
+                </table>
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <h3>No Leads Found</h3>
+                    <p>Start by adding your first lead or adjust your filters</p>
+                    <button class="btn-primary" onclick="openAddLeadModal()">Add Your First Lead</button>
+                </div>
+            </div>
+
+            <!-- Grid View -->
+            <div id="gridView" class="leads-grid" style="display: none;">
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Lead Modal -->
+    <div id="leadModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Lead</h2>
+                <button class="close-btn" onclick="closeLeadModal()">&times;</button>
+            </div>
+            <form id="leadForm" onsubmit="saveLead(event)">
+                <input type="hidden" id="leadId">
+
+                <div class="form-section">
+                    <h3>Basic Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Lead/Deal Name *</label>
+                            <input type="text" id="leadName" required placeholder="e.g., Website Redesign Project">
+                        </div>
+                        <div class="form-group">
+                            <label>Company Name *</label>
+                            <input type="text" id="leadCompany" required placeholder="e.g., Tech Corp Inc">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Contact Person *</label>
+                            <input type="text" id="leadContact" required placeholder="e.g., John Smith">
+                        </div>
+                        <div class="form-group">
+                            <label>Job Title</label>
+                            <input type="text" id="leadJobTitle" placeholder="e.g., CEO, Marketing Manager">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Contact Details</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="leadEmail" placeholder="john@company.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="leadPhone" placeholder="+1-555-0000">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Website</label>
+                            <input type="url" id="leadWebsite" placeholder="https://company.com">
+                        </div>
+                        <div class="form-group">
+                            <label>LinkedIn</label>
+                            <input type="url" id="leadLinkedin" placeholder="https://linkedin.com/in/...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Lead Details</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Deal Value *</label>
+                            <input type="number" id="leadValue" required placeholder="0" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Pipeline Stage *</label>
+                            <select id="leadStage" required>
+                                <option value="New Lead">New Lead</option>
+                                <option value="Qualified">Qualified</option>
+                                <option value="Proposal">Proposal</option>
+                                <option value="Negotiation">Negotiation</option>
+                                <option value="Closed Won">Closed Won</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Lead Source *</label>
+                            <select id="leadSource" required>
+                                <option value="Website Form">Website Form</option>
+                                <option value="Meta Ads">Meta Ads</option>
+                                <option value="Google Ads">Google Ads</option>
+                                <option value="Google Sheet">Google Sheet</option>
+                                <option value="External API">External API</option>
+                                <option value="Manual Entry">Manual Entry</option>
+                                <option value="Referral">Referral</option>
+                                <option value="Cold Outreach">Cold Outreach</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority *</label>
+                            <select id="leadPriority" required>
+                                <option value="Cold">Cold</option>
+                                <option value="Warm">Warm</option>
+                                <option value="Hot">Hot</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Industry</label>
+                        <input type="text" id="leadIndustry" placeholder="e.g., Technology, Healthcare, Finance">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="leadNotes" rows="4" placeholder="Add any additional information about this lead..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeLeadModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lead Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content modal-xlarge">
+            <div class="modal-header">
+                <div>
+                    <h2 id="detailsTitle">Lead Details</h2>
+                    <span class="detail-badge" id="detailsStage"></span>
+                </div>
+                <button class="close-btn" onclick="closeDetailsModal()">&times;</button>
+            </div>
+            <div class="details-container">
+                <div class="details-main">
+                    <div class="details-section">
+                        <h3>Basic Information</h3>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Company</span>
+                                <span class="detail-value" id="detailCompany"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Contact Person</span>
+                                <span class="detail-value" id="detailContact"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Job Title</span>
+                                <span class="detail-value" id="detailJobTitle"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Industry</span>
+                                <span class="detail-value" id="detailIndustry"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="details-section">
+                        <h3>Contact Information</h3>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Email</span>
+                                <span class="detail-value" id="detailEmail"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Phone</span>
+                                <span class="detail-value" id="detailPhone"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Website</span>
+                                <span class="detail-value" id="detailWebsite"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">LinkedIn</span>
+                                <span class="detail-value" id="detailLinkedin"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="details-section">
+                        <h3>Lead Details</h3>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Deal Value</span>
+                                <span class="detail-value highlight" id="detailValue"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Pipeline Stage</span>
+                                <span class="detail-value" id="detailStage"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Lead Source</span>
+                                <span class="detail-value" id="detailSource"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Priority</span>
+                                <span class="detail-value" id="detailPriority"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="details-section">
+                        <h3>Notes</h3>
+                        <p class="detail-notes" id="detailNotes"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-danger" onclick="deleteLead()">Delete Lead</button>
+                <button class="btn-secondary" onclick="closeDetailsModal()">Close</button>
+                <button class="btn-primary" onclick="editCurrentLead()">Edit Lead</button>
+            </div>
+        </div>
+    </div>
+
+  <script src="{{ url_for('static', filename='js/leads.js') }}"></script>
+{% endblock %} 

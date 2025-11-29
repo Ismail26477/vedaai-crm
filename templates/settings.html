@@ -1,0 +1,567 @@
+{% extends 'index.html' %}
+{% block title %}Settings - CRM Pro{% endblock %}
+{% block content %}
+    <title>CRM Dashboard - Analytics & Insights</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>CRM Settings</h1>
+            <p class="subtitle">Manage your CRM configuration and preferences</p>
+        </header>
+        <script>
+            // Ensure Users tab is active by default
+            window.addEventListener('DOMContentLoaded', function() {
+                switchTab('users');
+            });
+        </script>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="users">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Users & Roles
+            </button>
+            <button class="tab-btn" data-tab="leads">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                Lead & Call Settings
+            </button>
+            <button class="tab-btn" data-tab="integrations">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6m8-9l-5.2 3m-5.6 0L4 12m16 0l-5.2-3m-5.6 0L4 12"></path>
+                </svg>
+                Integrations
+            </button>
+            <button class="tab-btn" data-tab="security">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Security
+            </button>
+            <button class="tab-btn" data-tab="audit">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Audit Logs
+            </button>
+        </div>
+
+        <div id="users" class="tab-content active">
+            <div class="section-header">
+                <h2>Users & Roles Management</h2>
+                <button class="btn btn-primary" onclick="openAddUserModal()" style="margin-bottom: 1rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add New Caller
+                </button>
+            </div>
+
+            <div class="search-bar1">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterUsers()">
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name/Username</th>
+                            <th>Contact Info</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th style="text-align: right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable">
+                        <!-- Users will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Add a refresh button -->
+            <div style="text-align: right; margin-top: 1rem;">
+                <button onclick="refreshCallersList()" class="btn btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                        <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    Refresh List
+                </button>
+            </div>
+
+            <div class="pagination" id="usersPagination"></div>
+        </div>
+
+        <div id="leads" class="tab-content">
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <div class="section-header">
+                        <h3>Email Notifications</h3>
+                        <label class="toggle-label">
+                            <input type="checkbox" id="emailNotificationsEnabled" class="toggle" onchange="toggleEmailNotifications()">
+                            <span class="toggle-slider"></span>
+                            <span>Enable Email Notifications</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>SMTP Server</label>
+                        <input type="text" id="smtpServer" class="form-control" placeholder="e.g., smtp.gmail.com or smtp.office365.com">
+                    </div>
+                    <div class="form-group">
+                        <label>SMTP Port</label>
+                        <input type="number" id="smtpPort" class="form-control" value="587" min="1" max="65535">
+                    </div>
+                    <div class="form-group">
+                        <label>Sender Email Address</label>
+                        <input type="email" id="senderEmail" class="form-control" placeholder="noreply@yourdomain.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Sender Email Password</label>
+                        <input type="password" id="senderPassword" class="form-control" placeholder="Your email password or app-specific password">
+                    </div>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="notifyOnAssignment" class="toggle" checked>
+                            <span class="toggle-slider"></span>
+                            <span>Notify when lead is assigned</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="notifyOnStageChange" class="toggle">
+                            <span class="toggle-slider"></span>
+                            <span>Notify on stage changes</span>
+                        </label>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveEmailSettings()">Save Email Settings</button>
+                    <br>
+                    <br>
+                    <div class="section-header">
+                        <h3>Lead Stages</h3>
+                        <button class="btn btn-secondary" onclick="openAddStageModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Stage
+                        </button>
+                    </div>
+                    <div id="stagesList" class="stages-list"></div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Default Call Settings</h3>
+                    <div class="form-group">
+                        <label>Default Call Type</label>
+                        <select id="defaultCallType" class="form-control">
+                            <option value="inbound">Inbound</option>
+                            <option value="outbound">Outbound</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Default Follow-up Time (hours)</label>
+                        <input type="number" id="followUpTime" class="form-control" value="24" min="1">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveCallSettings()">Save Settings</button>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Call Assignment Rules</h3>
+                    <div class="form-group">
+                        <label>Assignment Method</label>
+                        <select id="assignmentMethod" class="form-control">
+                            <option value="round-robin">Round Robin</option>
+                            <option value="manual">Manual Assignment</option>
+                            <option value="load-balanced">Load Balanced</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="autoAssign" class="toggle">
+                            <span class="toggle-slider"></span>
+                            <span>Auto-assign new leads</span>
+                        </label>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveAssignmentRules()">Save Rules</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="integrations" class="tab-content">
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <div class="section-header">
+                        <h3>Google Sheets Integration</h3>
+                        <label class="toggle-label">
+                            <input type="checkbox" id="googleSheetsSync" class="toggle" onchange="toggleIntegration('googleSheets')">
+                            <span class="toggle-slider"></span>
+                            <span>Enable Sync</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <input type="password" id="googleSheetsKey" class="form-control" placeholder="Enter your Google Sheets API key">
+                    </div>
+                    <div class="form-group">
+                        <label>Spreadsheet ID</label>
+                        <input type="text" id="googleSheetsId" class="form-control" placeholder="Enter spreadsheet ID">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveIntegration('googleSheets')">Save Integration</button>
+                </div>
+
+                <div class="settings-card">
+                    <div class="section-header">
+                        <h3>Meta Ads Integration</h3>
+                        <label class="toggle-label">
+                            <input type="checkbox" id="metaAdsSync" class="toggle" onchange="toggleIntegration('metaAds')">
+                            <span class="toggle-slider"></span>
+                            <span>Enable Sync</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Access Token</label>
+                        <input type="password" id="metaAdsToken" class="form-control" placeholder="Enter your Meta Ads access token">
+                    </div>
+                    <div class="form-group">
+                        <label>Ad Account ID</label>
+                        <input type="text" id="metaAdsAccount" class="form-control" placeholder="Enter ad account ID">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveIntegration('metaAds')">Save Integration</button>
+                </div>
+
+                <div class="settings-card">
+                    <div class="section-header">
+                        <h3>Custom API Integration</h3>
+                        <label class="toggle-label">
+                            <input type="checkbox" id="customApiSync" class="toggle" onchange="toggleIntegration('customApi')">
+                            <span class="toggle-slider"></span>
+                            <span>Enable Sync</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>API Endpoint</label>
+                        <input type="text" id="customApiEndpoint" class="form-control" placeholder="https://api.example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <input type="password" id="customApiKey" class="form-control" placeholder="Enter your API key">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveIntegration('customApi')">Save Integration</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="security" class="tab-content">
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h3>Password Requirements</h3>
+                    <div class="form-group">
+                        <label>Minimum Password Length</label>
+                        <input type="number" id="minPasswordLength" class="form-control" value="8" min="6" max="32">
+                    </div>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="requireSpecialChar" class="toggle" checked>
+                            <span class="toggle-slider"></span>
+                            <span>Require special characters</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="requireNumbers" class="toggle" checked>
+                            <span class="toggle-slider"></span>
+                            <span>Require numbers</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="requireUppercase" class="toggle" checked>
+                            <span class="toggle-slider"></span>
+                            <span>Require uppercase letters</span>
+                        </label>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSecuritySettings()">Save Settings</button>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Authentication Settings</h3>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="enable2FA" class="toggle">
+                            <span class="toggle-slider"></span>
+                            <span>Enable Two-Factor Authentication (2FA)</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Session Timeout (minutes)</label>
+                        <input type="number" id="sessionTimeout" class="form-control" value="60" min="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Login Attempts</label>
+                        <input type="number" id="maxLoginAttempts" class="form-control" value="5" min="3">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSecuritySettings()">Save Settings</button>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Access Restrictions</h3>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="enableIpRestriction" class="toggle">
+                            <span class="toggle-slider"></span>
+                            <span>Enable IP-based restrictions</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Allowed IP Addresses (comma-separated)</label>
+                        <textarea id="allowedIps" class="form-control" rows="3" placeholder="192.168.1.1, 10.0.0.1"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="enableDeviceRestriction" class="toggle">
+                            <span class="toggle-slider"></span>
+                            <span>Restrict access to registered devices</span>
+                        </label>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSecuritySettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="audit" class="tab-content">
+            <div class="section-header">
+                <h2>Audit Logs</h2>
+                <button class="btn btn-primary" onclick="exportLogs()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Export CSV
+                </button>
+            </div>
+
+            <div class="filters">
+                <div class="form-group">
+                    <label>Filter by User</label>
+                    <select id="logUserFilter" class="form-control" onchange="filterLogs()">
+                        <option value="">All Users</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Filter by Action</label>
+                    <select id="logActionFilter" class="form-control" onchange="filterLogs()">
+                        <option value="">All Actions</option>
+                        <option value="created">Created</option>
+                        <option value="updated">Updated</option>
+                        <option value="deleted">Deleted</option>
+                        <option value="login">Login</option>
+                        <option value="logout">Logout</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>From Date</label>
+                    <input type="date" id="logDateFrom" class="form-control" onchange="filterLogs()">
+                </div>
+                <div class="form-group">
+                    <label>To Date</label>
+                    <input type="date" id="logDateTo" class="form-control" onchange="filterLogs()">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Entity Type</th>
+                            <th>Entity ID</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditLogsTable"></tbody>
+                </table>
+            </div>
+
+            <div class="pagination" id="logsPagination"></div>
+        </div>
+    </div>
+
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2563eb, #7c3aed); color: white;">
+                <h3 id="userModalTitle" style="color: white;">Add New Caller</h3>
+                <button class="close-btn" onclick="closeUserModal()" style="color: white;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm" onsubmit="saveUser(event)">
+                    <input type="hidden" id="userId">
+                    <div class="form-group">
+                        <label>Name *</label>
+                        <input type="text" id="userName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username *</label>
+                        <input type="text" id="userUsername" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password *</label>
+                        <input type="password" id="userPassword" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="userEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone *</label>
+                        <input type="tel" id="userPhone" class="form-control" pattern="[0-9+\-\s()]+" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role *</label>
+                        <select id="userRole" class="form-control" required>
+                            <option value="">Select Role</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Caller">Caller</option>
+                            <option value="Viewer">Viewer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="userStatus" class="form-control">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="permissions-section">
+                        <h4>Permissions</h4>
+                        <div class="permission-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="permManageUsers" class="toggle">
+                                <span class="toggle-slider"></span>
+                                <span>Manage Users</span>
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="permManageLeads" class="toggle">
+                                <span class="toggle-slider"></span>
+                                <span>Manage Leads</span>
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="permMakeCalls" class="toggle">
+                                <span class="toggle-slider"></span>
+                                <span>Make Calls</span>
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="permViewReports" class="toggle">
+                                <span class="toggle-slider"></span>
+                                <span>View Reports</span>
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="permManageSettings" class="toggle">
+                                <span class="toggle-slider"></span>
+                                <span>Manage Settings</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="stageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="stageModalTitle">Add Lead Stage</h3>
+                <button class="close-btn" onclick="closeStageModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="stageForm" onsubmit="saveStage(event)">
+                    <input type="hidden" id="stageId">
+                    <div class="form-group">
+                        <label>Stage Name *</label>
+                        <input type="text" id="stageName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <input type="color" id="stageColor" class="form-control" value="#3b82f6">
+                    </div>
+                    <div class="form-group">
+                        <label>Order</label>
+                        <input type="number" id="stageOrder" class="form-control" min="1" value="1">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeStageModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Stage</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="close-btn" onclick="closeDeleteModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteMessage">Are you sure you want to delete this item?</p>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends 'index.html' %}
+{% block title %}Customers - CRM Pro{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/customers.css') }}">
+
+<div class="app-container">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1>Customers</h1>
+                <p class="subtitle">Manage contacts converted from won deals</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-primary" onclick="syncWonLeads()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Sync Won Leads
+                </button>
+                <button class="btn-secondary" onclick="exportToCSV()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Export CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Bar (keeps ids expected by customers.js) -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">Total Customers</div>
+                    <div class="stat-value" id="totalCustomers">0</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">VIP Customers</div>
+                    <div class="stat-value" id="vipCustomers">0</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">Avg Customer Value</div>
+                    <div class="stat-value" id="avgValue">₹0</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filters & Table -->
+    <main class="main-content">
+        <div class="filters-bar">
+            <div class="search-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search customers by name, company, or contact..." oninput="filterCustomers()">
+            </div>
+
+            <div class="filter-group">
+                <label>Priority:</label>
+                <select id="priorityFilter" onchange="filterCustomers()">
+                    <option value="">All Priorities</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="VIP">VIP</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Source:</label>
+                <select id="sourceFilter" onchange="filterCustomers()">
+                    <option value="">All Sources</option>
+                    <option value="Website">Website</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Social Media">Social Media</option>
+                    <option value="Email">Email</option>
+                    <option value="Direct">Direct</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Empty / error state (hidden by default) -->
+        <div id="emptyState" style="display:none;text-align:center;padding:2rem;color:#64748b">
+            <p>No customers to show. Click "Sync Won Leads" to import won leads, or ensure you have leads with stage "Closed Won" or "Won".</p>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header">
+                <h2 class="table-title">Customer List</h2>
+            </div>
+
+            <div class="table-container">
+                <table class="leads-table customers-table" id="customersTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>NAME</th>
+                            <th>NUMBER</th>
+                            <th>EMAIL</th>
+                            <th>CITY</th>
+                            <th>VALUE</th>
+                            <th>SOURCE</th>
+                            <th>STAGE</th>
+                            <th>PRIORITY</th>
+                            <th>CALL/WHATSAPP</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerTableBody">
+                        <tr class="loading-row">
+                            <td colspan="11" class="loading-cell">
+                                <div class="loader"></div>
+                                <p>Loading customers...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/customers.js') }}"></script>
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
+{% endblock %}

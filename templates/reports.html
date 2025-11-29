@@ -1,0 +1,326 @@
+{% extends 'index.html' %}
+{% block title %}Advanced Reports - Real Estate CRM{% endblock %}
+{% block content %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Advanced Reports</h1>
+                    <p class="subtitle">Property, pipeline & lead insights for real estate</p>
+                </div>
+                <div class="header-actions">
+                    <div class="date-picker">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <input type="date" id="startDate" onchange="filterByDateRange()">
+                        <span>to</span>
+                        <input type="date" id="endDate" onchange="filterByDateRange()">
+                    </div>
+
+                    <select id="reportType" onchange="changeReportType()">
+                        <option value="overview">Overview Report</option>
+                        <option value="listings">Listings Performance</option>
+                        <option value="leads">Lead Analysis</option>
+                        <option value="conversion">Conversion Report</option>
+                        <option value="source">Source Analysis</option>
+                    </select>
+
+                    <button class="btn-secondary" onclick="printReport()">Print</button>
+                    <button class="btn-primary" onclick="exportAllReports()">Export All</button>
+                </div>
+            </div>
+
+            <!-- Quick Stats (real-estate focused) -->
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Active Listings</span>
+                        <span class="stat-value" id="statActiveListings">0</span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Pipeline Value</span>
+                        <span class="stat-value" id="statPipelineValue">₹0</span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Sold This Month</span>
+                        <span class="stat-value" id="statSoldThisMonth">0</span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Avg Days on Market</span>
+                        <span class="stat-value" id="statAvgDOM">0 days</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Listings / Sold Analysis -->
+            <section class="report-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Listings Trend</h2>
+                        <p class="section-subtitle">Closed / Sold listings trend over last 12 months</p>
+                    </div>
+                    <button class="btn-export" onclick="exportSection('listings')">Export</button>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="chart-card full-width">
+                        <h3>Monthly Listings Closed</h3>
+                        <div class="chart-container large">
+                            <canvas id="listingsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-row">
+                    <div class="metric-box">
+                        <span class="metric-label">Current Month Closed</span>
+                        <span class="metric-value" id="currentMonthClosed">0</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Last Month Closed</span>
+                        <span class="metric-value" id="lastMonthClosed">0</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">YTD Closed</span>
+                        <span class="metric-value" id="ytdClosed">0</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Projected Closings</span>
+                        <span class="metric-value" id="projectedClosings">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lead Performance -->
+            <section class="report-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Lead Performance Analysis</h2>
+                        <p class="section-subtitle">Analyze lead sources and conversion rates</p>
+                    </div>
+                    <button class="btn-export" onclick="exportSection('leads')">Export</button>
+                </div>
+
+                <div class="chart-grid two-column">
+                    <div class="chart-card">
+                        <h3>Lead Sources Distribution</h3>
+                        <div class="chart-container">
+                            <canvas id="sourceChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Lead Status Breakdown</h3>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <h3>Lead Source Performance</h3>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Total Leads</th>
+                                <th>Converted</th>
+                                <th>Conversion Rate</th>
+                                <th>Revenue Generated</th>
+                                <th>Avg Deal Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sourcePerformanceTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Conversion Funnel -->
+            <section class="report-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Conversion Funnel Analysis</h2>
+                        <p class="section-subtitle">Track leads through sales pipeline stages</p>
+                    </div>
+                    <button class="btn-export" onclick="exportSection('funnel')">Export</button>
+                </div>
+
+                <div class="funnel-visual" id="conversionFunnel"></div>
+
+                <div class="table-container">
+                    <h3>Stage-by-Stage Analysis</h3>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Pipeline Stage</th>
+                                <th>Total Deals</th>
+                                <th>Total Value</th>
+                                <th>Conversion Rate</th>
+                                <th>Drop-off Rate</th>
+                                <th>Avg. Time in Stage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="funnelAnalysisTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Time Analysis -->
+            <section class="report-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Time-Based Analytics</h2>
+                        <p class="section-subtitle">Analyze performance over time periods</p>
+                    </div>
+                    <button class="btn-export" onclick="exportSection('time')">Export</button>
+                </div>
+
+                <div class="chart-grid two-column">
+                    <div class="chart-card">
+                        <h3>Leads by Day of Week</h3>
+                        <div class="chart-container">
+                            <canvas id="dayOfWeekChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Deals Closed by Month</h3>
+                        <div class="chart-container">
+                            <canvas id="monthlyDealsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Priority Analysis -->
+            <section class="report-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Priority & Performance Insights</h2>
+                        <p class="section-subtitle">Analyze deals by priority and success metrics</p>
+                    </div>
+                    <button class="btn-export" onclick="exportSection('priority')">Export</button>
+                </div>
+
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <div class="insight-icon hot"></div>
+                        <div class="insight-content">
+                            <h4>Hot Leads</h4>
+                            <div class="insight-value" id="hotLeadsCount">0</div>
+                            <div class="insight-details"><span id="hotLeadsRevenue">₹0</span> in potential value</div>
+                            <div class="insight-bar"><div class="insight-bar-fill hot" id="hotLeadsBar"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <div class="insight-icon warm"></div>
+                        <div class="insight-content">
+                            <h4>Warm Leads</h4>
+                            <div class="insight-value" id="warmLeadsCount">0</div>
+                            <div class="insight-details"><span id="warmLeadsRevenue">₹0</span> in potential value</div>
+                            <div class="insight-bar"><div class="insight-bar-fill warm" id="warmLeadsBar"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <div class="insight-icon cold"></div>
+                        <div class="insight-content">
+                            <h4>Cold Leads</h4>
+                            <div class="insight-value" id="coldLeadsCount">0</div>
+                            <div class="insight-details"><span id="coldLeadsRevenue">₹0</span> in potential value</div>
+                            <div class="insight-bar"><div class="insight-bar-fill cold" id="coldLeadsBar"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <h3>Top 10 Opportunities</h3>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Deal Name</th>
+                                <th>City</th>
+                                <th>Value</th>
+                                <th>Stage</th>
+                                <th>Priority</th>
+                                <th>Age (Days)</th>
+                                <th>Win Probability</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topOpportunitiesTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Summary Report -->
+            <section class="report-section summary-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Executive Summary</h2>
+                        <p class="section-subtitle">Key insights and recommendations</p>
+                    </div>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <h4>Performance Highlights</h4>
+                        <ul id="performanceHighlights"></ul>
+                    </div>
+
+                    <div class="summary-card">
+                        <h4>Areas for Improvement</h4>
+                        <ul id="improvementAreas"></ul>
+                    </div>
+
+                    <div class="summary-card">
+                        <h4>Recommendations</h4>
+                        <ul id="recommendations"></ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+  <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

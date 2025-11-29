@@ -1,0 +1,414 @@
+{% extends 'index.html' %}
+{% block title %}Dashboard - CRM Pro{% endblock %}
+{% block content %}
+
+    <title>CRM Pipeline - Sales Management</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <h1>CRM Pipeline</h1>
+                <div class="header-actions">
+                    <button class="btn-primary" onclick="openAddLeadModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add New Lead
+                    </button>
+                    <button class="btn-primary" onclick="openLeadSourceModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        </svg>
+                        Import Leads
+                    </button>
+                </div>
+            </div>
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-label">Total Deals</div>
+                    <div class="stat-value" id="totalDeals">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pipeline Value</div>
+                    <div class="stat-value" id="pipelineValue">₹0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Deal Size</div>
+                    <div class="stat-value" id="avgDealSize">₹0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-value" id="winRate">0%</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="pipeline-board">
+            <div class="pipeline-column" data-stage="New Lead">
+                <div class="column-header">
+                    <h2>New Lead</h2>
+                    <span class="column-count" id="count-new-lead">0</span>
+                </div>
+                <div class="column-value" id="value-new-lead">₹0</div>
+                <div class="cards-container" id="stage-new-lead"
+                     ondrop="drop(event)"
+                     ondragover="allowDrop(event)">
+                </div>
+            </div>
+
+            <div class="pipeline-column" data-stage="Qualified">
+                <div class="column-header">
+                    <h2>Qualified</h2>
+                    <span class="column-count" id="count-qualified">0</span>
+                </div>
+                <div class="column-value" id="value-qualified">₹0</div>
+                <div class="cards-container" id="stage-qualified"
+                     ondrop="drop(event)"
+                     ondragover="allowDrop(event)">
+                </div>
+            </div>
+
+            <div class="pipeline-column" data-stage="Proposal">
+                <div class="column-header">
+                    <h2>Proposal</h2>
+                    <span class="column-count" id="count-proposal">0</span>
+                </div>
+                <div class="column-value" id="value-proposal">₹0</div>
+                <div class="cards-container" id="stage-proposal"
+                     ondrop="drop(event)"
+                     ondragover="allowDrop(event)">
+                </div>
+            </div>
+
+            <div class="pipeline-column" data-stage="Negotiation">
+                <div class="column-header">
+                    <h2>Negotiation</h2>
+                    <span class="column-count" id="count-negotiation">0</span>
+                </div>
+                <div class="column-value" id="value-negotiation">₹0</div>
+                <div class="cards-container" id="stage-negotiation"
+                     ondrop="drop(event)"
+                     ondragover="allowDrop(event)">
+                </div>
+            </div>
+
+            <div class="pipeline-column" data-stage="Closed Won">
+                <div class="column-header">
+                    <h2>Closed Won</h2>
+                    <span class="column-count" id="count-closed-won">0</span>
+                </div>
+                <div class="column-value" id="value-closed-won">₹0</div>
+                <div class="cards-container" id="stage-closed-won"
+                     ondrop="drop(event)"
+                     ondragover="allowDrop(event)">
+                </div>
+            </div>
+        </main>
+    </div>
+
+     <!-- Add/Edit Lead Modal -->
+    <div id="leadModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Lead</h2>
+                <button class="close-btn" onclick="closeLeadModal()">&times;</button>
+            </div>
+            <form id="leadForm" onsubmit="saveLead(event)">
+                <input type="hidden" id="leadId">
+
+                <div class="form-section">
+                    <h3>Lead Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name *</label>
+                            <input type="text" id="leadName" required placeholder="e.g., John Smith">
+                        </div>
+                        <div class="form-group">
+                            <label>Number *</label>
+                            <input type="tel" id="leadPhone" required placeholder="+91 987 654 3210">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email (Optional)</label>
+                            <input type="email" id="leadEmail" placeholder="your@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>City *</label>
+                            <input type="text" id="leadCity" required placeholder="e.g., Nagpur">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Value *</label>
+                            <input type="number" id="leadValue" required placeholder="0" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Source *</label>
+                            <select id="leadSource" required>
+                                <option value="Website Form">Website Form</option>
+                                <option value="Meta Ads">Meta Ads</option>
+                                <option value="Google Ads">Google Ads</option>
+                                <option value="Google Sheet">Google Sheet</option>
+                                <option value="External API">External API</option>
+                                <option value="Manual Entry">Manual Entry</option>
+                                <option value="Referral">Referral</option>
+                                <option value="Cold Outreach">Cold Outreach</option>
+                            </select>
+                        </div>
+                    </div> 
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Stage *</label>
+                            <select id="leadStage" required>
+                                <option value="New Lead">New Lead</option>
+                                <option value="Qualified">Qualified</option>
+                                <option value="Proposal">Proposal</option>
+                                <option value="Negotiation">Negotiation</option>
+                                <option value="Closed Won">Closed Won</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority *</label>
+                            <select id="leadPriority" required>
+                                <option value="Cold">Cold</option>
+                                <option value="Warm">Warm</option>
+                                <option value="Hot">Hot</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Assign To Caller</label>
+                            <select id="leadAssignedCaller">
+                                <option value="">-- Not Assigned --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeLeadModal()">Cancel</button>
+                    <button type="button" class="btn-secondary" onclick="autoAssignCurrentLead()" id="autoAssignBtn" style="display: none;">
+                        Auto-Assign 
+                    </button>
+                    <button type="submit" class="btn-primary">Save Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lead Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="detailsTitle">Lead Details</h2>
+                <button class="close-btn" onclick="closeDetailsModal()">&times;</button>
+            </div>
+            <div class="details-content">
+                <div class="details-section">
+                    <div class="detail-row">
+                        <span class="detail-label">Company:</span>
+                        <span class="detail-value" id="detailCompany"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Contact:</span>
+                        <span class="detail-value" id="detailContact"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value" id="detailEmail"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Phone:</span>
+                        <span class="detail-value" id="detailPhone"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Value:</span>
+                        <span class="detail-value" id="detailValue"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Stage:</span>
+                        <span class="detail-value" id="detailStage"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Source:</span>
+                        <span class="detail-value" id="detailSource"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Notes:</span>
+                        <span class="detail-value" id="detailNotes"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-danger" onclick="deleteLead()">Delete</button>
+                <button class="btn-secondary" onclick="closeDetailsModal()">Close</button>
+                <button class="btn-primary" onclick="editCurrentLead()">Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lead Source/Import Modal -->
+    <div id="sourceModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Import Leads</h2>
+                <button class="close-btn" onclick="closeLeadSourceModal()">&times;</button>
+            </div>
+            <div class="source-grid">
+                <div class="source-card" onclick="selectSource('Website Form')">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="9" x2="15" y2="9"></line>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                    <h3>Website Form</h3>
+                    <p>Leads from contact forms on your website</p>
+                </div>
+
+                <div class="source-card" onclick="selectSource('Meta Ads')">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                    </svg>
+                    <h3>Meta Ads</h3>
+                    <p>Import leads from Facebook & Instagram ads</p>
+                </div>
+
+                <div class="source-card" onclick="selectSource('Google Ads')">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4"></path>
+                        <path d="M12 8h.01"></path>
+                    </svg>
+                    <h3>Google Ads</h3>
+                    <p>Sync leads from Google Ads campaigns</p>
+                </div>
+
+                <div class="source-card" onclick="selectSource('Google Sheet')">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <h3>Google Sheet</h3>
+                    <p>Import from Google Sheets spreadsheets</p>
+                </div>
+
+                <div class="source-card" onclick="selectSource('External API')">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    <h3>External API</h3>
+                    <p>Connect via REST API or webhooks</p>
+                </div>
+
+                <div class="source-card" onclick="selectSource('Manual Entry')">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <h3>Manual Entry</h3>
+                    <p>Add leads manually one by one</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeLeadSourceModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Sheet Import Modal -->
+<div id="googleSheetModal" class="modal">
+    <div class="modal-content modal-medium">
+        <div class="modal-header">
+            <h2>Import from Google Sheet</h2>
+            <button class="close-btn" onclick="closeGoogleSheetModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label>Google Sheet URL or ID:</label>
+            <input type="text" id="sheetUrl" placeholder="Enter Sheet URL or ID">
+            <button class="btn" onclick="confirmGoogleSheetImport()">Import</button>
+        </div>
+    </div>
+</div>
+
+<!-- Meta Ads Import Modal -->
+<div id="metaAdsModal" class="modal">
+    <div class="modal-content modal-medium">
+        <div class="modal-header">
+            <h2>Import from Meta Ads</h2>
+            <button class="close-btn" onclick="closeMetaAdsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label>Meta Ads Account ID (optional):</label>
+            <input type="text" id="adAccount">
+            <label>Campaign ID (optional):</label>
+            <input type="text" id="campaignId">
+            <button class="btn" onclick="confirmMetaAdsImport()">Import</button>
+        </div>
+    </div>
+</div>
+
+  <script src="{{ url_for('static', filename='js/pipeline.js') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadCallersForAssignment()
+        })
+        
+        async function loadCallersForAssignment() {
+            try {
+                const res = await fetch('/api/callers')
+                if (!res.ok) return
+                const data = await res.json()
+                
+                if (data.success && data.callers) {
+                    const select = document.getElementById('leadAssignedCaller')
+                    select.innerHTML = '<option value="">-- Not Assigned --</option>'
+                    data.callers.forEach(caller => {
+                        const option = document.createElement('option')
+                        option.value = caller.id
+                        option.textContent = caller.name || caller.username
+                        select.appendChild(option)
+                    })
+                    
+                    const autoAssignBtn = document.getElementById('autoAssignBtn')
+                    if (autoAssignBtn) autoAssignBtn.style.display = 'inline-block'
+                }
+            } catch (error) {
+                console.error("[v0] Error loading callers:", error)
+            }
+        }
+        
+        async function autoAssignCurrentLead() {
+            const leadId = document.getElementById('leadId').value
+            if (!leadId) return
+            
+            try {
+                const res = await fetch(`/api/leads/${leadId}/auto-assign`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                })
+                
+                if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                const data = await res.json()
+                
+                if (data.success) {
+                    alert(`Lead auto-assigned to ${data.assignedTo}`)
+                    document.getElementById('leadAssignedCaller').value = ''
+                }
+            } catch (error) {
+                console.error("[v0] Error auto-assigning:", error)
+            }
+        }
+    </script>
+
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'index.html' %}
+{% block title %}Analytics - Real Estate CRM{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+
+<div class="main-wrapper" id="mainWrapper">
+    <!-- Top Bar -->
+    <header class="topbar" role="banner">
+        <div class="topbar-left">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <h1 class="page-title">Analytics Dashboard</h1>
+        </div>
+
+        <div class="topbar-right">
+            <button class="btn-secondary" id="exportBtn" title="Export analytics">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export
+            </button>
+        </div>
+    </header>
+
+    <main class="page-content" id="pageContent">
+        <!-- Filters -->
+        <div class="filters-bar" role="region" aria-label="Filters">
+            <div class="filter-group">
+                <label class="filter-label">Quick Range</label>
+                <div class="quick-range" role="group" aria-label="Quick date range">
+                    <button class="range-btn" data-range="today" type="button">Today</button>
+                    <button class="range-btn active" data-range="week" type="button">Week</button>
+                    <button class="range-btn" data-range="month" type="button">Month</button>
+                    <button class="range-btn" data-range="quarter" type="button">Quarter</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label" for="fromDate">Custom Date</label>
+                <div class="date-range">
+                    <input type="date" id="fromDate" class="date-input" aria-label="From date">
+                    <span aria-hidden="true">—</span>
+                    <input type="date" id="toDate" class="date-input" aria-label="To date">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label" for="sourceFilter">Lead Source</label>
+                <select class="filter-select" id="sourceFilter" aria-label="Lead source filter">
+                    <option value="all">All Sources</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="website">Website</option>
+                    <option value="referral">Referral</option>
+                    <option value="social">Social Media</option>
+                </select>
+            </div>
+
+            <div class="filter-actions">
+                <button class="btn-primary" id="applyFilters" type="button">Apply Filters</button>
+                <button class="btn-secondary" id="resetFilters" type="button">Reset</button>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-row" role="region" aria-label="Key performance indicators">
+            {% for kpi in [
+                {'label': 'Total Leads', 'value': '0', 'id': 'kpiTotalLeads'},
+                {'label': 'Leads Contacted', 'value': '0', 'id': 'kpiContacted'},
+                {'label': 'Leads Converted', 'value': '0', 'id': 'kpiConverted'},
+                {'label': 'Missed Follow-ups', 'value': '0', 'id': 'kpiMissed'},
+                {'label': 'Total Calls', 'value': '0', 'id': 'kpiCalls'}
+            ] %}
+            <div class="kpi-card" role="article" aria-label="{{ kpi.label }}">
+                <div class="kpi-text">
+                    <p class="kpi-label">{{ kpi.label }}</p>
+                    <h3 id="{{ kpi.id }}" class="kpi-value">{{ kpi.value }}</h3>
+                </div>
+                <canvas id="spark{{ kpi.id }}" class="sparkline" height="40" width="120" aria-hidden="true"></canvas>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section" role="region" aria-label="Charts">
+            <div class="chart-card large">
+                <div class="chart-header">
+                    <h3 class="chart-title">Lead Conversions</h3>
+                    <div class="chart-controls" role="tablist" aria-label="Conversion period">
+                        <button class="chart-tab active" data-period="daily" type="button" role="tab" aria-selected="true">Daily</button>
+                        <button class="chart-tab" data-period="weekly" type="button" role="tab">Weekly</button>
+                        <button class="chart-tab" data-period="monthly" type="button" role="tab">Monthly</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="conversionsChart" aria-label="Lead conversions chart" role="img"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card large">
+                <div class="chart-header">
+                    <h3 class="chart-title">Calls Per Day</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="callsChart" aria-label="Calls per day chart" role="img"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card small">
+                <h3 class="chart-title">Lead Source Distribution</h3>
+                <div class="chart-container small">
+                    <canvas id="sourceChart" aria-label="Lead source distribution chart" role="img"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card small">
+                <h3 class="chart-title">Follow-up Status</h3>
+                <div class="chart-container small">
+                    <canvas id="followupChart" aria-label="Follow-up status chart" role="img"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tables -->
+        <section class="table-section" aria-labelledby="teamPerformanceTitle">
+            <div class="table-header">
+                <h3 id="teamPerformanceTitle" class="section-title">Team Performance</h3>
+                <input id="tableSearch" class="table-search" placeholder="Search leads or assignee..." aria-label="Search table">
+            </div>
+            <div class="table-container">
+                <table class="data-table" id="teamTable" role="table" aria-describedby="teamPerformanceTitle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Member</th>
+                            <th scope="col">Calls</th>
+                            <th scope="col">Conversions</th>
+                            <th scope="col">Conversion Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="table-section" aria-labelledby="followupTrackerTitle">
+            <div class="table-header">
+                <h3 id="followupTrackerTitle" class="section-title">Follow-up Tracker</h3>
+                <div class="table-actions">
+                    <button class="btn-secondary" id="autoSuggestBtn" type="button">Auto Suggest</button>
+                    <button class="btn-secondary" id="bulkExportBtn" type="button">Export Visible</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table sortable" id="followupTable" role="table" aria-describedby="followupTrackerTitle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Lead Name</th>
+                            <th scope="col">Last Call Date</th>
+                            <th scope="col">Next Follow-up</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Assigned To</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="followupTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Modal -->
+<div id="leadModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalLeadName">
+    <div class="modal-content">
+        <button class="close-btn" id="closeLeadModal" aria-label="Close modal">&times;</button>
+        <h3 id="modalLeadName">Lead Name</h3>
+        <p><strong>Assigned To:</strong> <span id="modalAssignedTo"></span></p>
+        <p><strong>Last Call:</strong> <span id="modalLastCall"></span></p>
+        <p><strong>Next Follow-up:</strong> <span id="modalNextFollowup"></span></p>
+        <p><strong>Status:</strong> <span id="modalStatus"></span></p>
+        <div class="modal-actions">
+            <button class="btn-primary" id="modalMarkDone" type="button">Mark as Done</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span id="toastMessage">Action completed successfully!</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,733 @@
+{% extends 'index.html' %}
+{% block title %}Leads Management - CRM Pro{% endblock %}
+{% block content %}
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/leads.css') }}"></head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-top">
+                <h1>Leads Management</h1>
+                <p>Manage and track all your leads in one place</p>
+            </div>
+            <div class="header-actions">
+                <div class="view-toggles">
+                    <button id="listViewBtn" class="view-btn active" onclick="toggleView('list')" title="List View">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </button>
+                    <button id="gridViewBtn" class="view-btn" onclick="toggleView('grid')" title="Grid View">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </button>
+                </div>
+                <button class="btn btn-primary" onclick="openAddLeadModal()" title="Add a new lead">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add New Lead
+                </button>
+                <button class="btn btn-secondary" onclick="openImportModal()" title="Import leads from Excel/CSV">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Import Excel
+                </button>
+                <button class="btn btn-secondary" onclick="exportLeads()" title="Export leads to CSV">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 3 12 8 17 3"></polyline>
+                        <line x1="12" y1="8" x2="12" y2="21"></line>
+                    </svg>
+                    Export
+                </button>
+                
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #ebc3f5;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Leads</div>
+                    <div class="stat-value" id="totalLeads">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fcd3b3;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="19" cy="12" r="1"></circle>
+                        <circle cx="5" cy="12" r="1"></circle>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">New Today</div>
+                    <div class="stat-value" id="newToday">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #b3e5fc;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 17"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Hot Leads</div>
+                    <div class="stat-value" id="hotLeads">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #b3f1b3;">
+                    <span style="font-size: 24px; font-weight: bold; color: white;">₹</span>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Value</div>
+                    <div class="stat-value" id="totalValue">₹0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-section">
+            <div class="search-bar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search leads by name, company, or contact..." onkeyup="filterLeads()">
+            </div>
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="filterStage">Stage:</label>
+                    <select id="filterStage" onchange="filterLeads()">
+                        <option value="">All Stages</option>
+                        <option value="New Lead">New Lead</option>
+                        <option value="Qualified">Qualified</option>
+                        <option value="Proposal">Proposal</option>
+                        <option value="Negotiation">Negotiation</option>
+                        <option value="Closed Won">Closed Won</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterSource">Source:</label>
+                    <select id="filterSource" onchange="filterLeads()">
+                        <option value="">All Sources</option>
+                        <option value="Website Form">Website Form</option>
+                        <option value="Google Ads">Google Ads</option>
+                        <option value="Referral">Referral</option>
+                        <option value="Direct Call">Direct Call</option>
+                        <option value="Manual Entry">Manual Entry</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterPriority">Priority:</label>
+                    <select id="filterPriority" onchange="filterLeads()">
+                        <option value="">All Priorities</option>
+                        <option value="Hot">Hot</option>
+                        <option value="Warm">Warm</option>
+                        <option value="Cold">Cold</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterCaller">Assigned Caller:</label>
+                    <select id="filterCaller" onchange="filterLeads()">
+                        <option value="">All Callers</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterProject">Project:</label>
+                    <select id="filterProject" onchange="filterLeads()">
+                        <option value="">All Projects</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterLeadStatus">Lead Status:</label>
+                    <select id="filterLeadStatus" onchange="filterLeads()">
+                        <option value="">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterNextFollow">Next Follow:</label>
+                    <select id="filterNextFollow" onchange="filterLeads()">
+                        <option value="">All Follow Types</option>
+                        <option value="On Request">On Request</option>
+                        <option value="Not Picked">Not Picked</option>
+                    </select>
+                </div>
+                <button class="btn btn-text" onclick="clearFilters()" title="Clear all filters">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Clear
+                </button>
+            </div>
+        </div>
+
+        <!-- Bulk Delete Button -->
+        <div id="bulkDeleteBtn" class="bulk-delete-btn" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Delete Selected (0)</span>
+            <span class="spacer"></span>
+            <button onclick="bulkDeleteLeads()" style="background: #ef4444; border: none; padding: 0.5rem 1rem; color: white; border-radius: 0.375rem; cursor: pointer; font-weight: 500;">
+                Confirm Delete
+            </button>
+        </div>
+
+        <!-- List View -->
+        <div id="listView" style="display: block;">
+            <div class="table-container">
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            
+                            <th style="width: 40px;">
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th style="width: 50px;">
+                                SR NO.
+                            </th>
+                            <th onclick="sortTable('name')">
+                                NAME
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th onclick="sortTable('phone')">
+                                NUMBER
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th onclick="sortTable('email')">
+                                EMAIL
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <!-- Replaced CITY column header with ASSIGNED CALLER header -->
+                            <th onclick="sortTable('city')">
+                                CITY
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <!-- Added Created At column -->
+                            
+                            
+                            <th onclick="sortTable('assignedCallerName')">
+                                ASSIGNED CALLER
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <!-- Removed VALUE column header to reduce table width -->
+                             
+                            <th>SOURCE</th>
+                            <th>STAGE</th>
+                            <th>PRIORITY</th>
+                            <th onclick="sortTable('createdAt')">
+                                CREATED AT
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+
+                            <!-- Added new columns: Project, Lead Status, Next Follow, Next Follow Date -->
+                            <th onclick="sortTable('project')">
+                                PROJECT
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th onclick="sortTable('leadStatus')">
+                                LEAD STATUS
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th onclick="sortTable('nextFollow')">
+                                NEXT FOLLOW
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th onclick="sortTable('nextFollowDate')">
+                                NEXT FOLLOW DATE & TIME
+                                <svg class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m7 15 5 5 5-5"></path>
+                                    <path d="m7 9 5-5 5 5"></path>
+                                </svg>
+                            </th>
+                            <th>CALL/WHATSAPP</th>
+                            <th>ACTIONS</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTableBody">
+                        <!-- Leads will be rendered here -->
+                    </tbody>
+                </table>
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <path d="M9 12h6m-6 4h6M5 20h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path>
+                    </svg>
+                    <p>No leads found. Try adjusting your filters or add a new lead.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid View -->
+        <div id="gridView" style="display: none;"></div>
+    </div>
+
+    <!-- Add/Edit Lead Modal -->
+    <div id="leadModal" class="modal">
+        <div class="modal-content" style="width: 600px;">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Lead</h2>
+                <button class="modal-close" onclick="closeLeadModal()">✕</button>
+            </div>
+            <form id="leadForm" onsubmit="saveLead(event)">
+                <input type="hidden" id="leadId">
+                <!-- Lead Information Section -->
+                <div style="padding: 1.5rem;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.05em;">Lead Information</h3>
+                        
+                        <!-- Two column grid for name and number -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label for="leadName">Name *</label>
+                                <input type="text" id="leadName" required placeholder="e.g., John Smith">
+                            </div>
+                            <div class="form-group">
+                                <label for="leadPhone">Number *</label>
+                                <input type="tel" id="leadPhone" required placeholder="+91 987 654 3210">
+                            </div>
+                        </div>
+
+                        <!-- Two column grid for email and city -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label for="leadEmail">Email (Optional)</label>
+                                <input type="email" id="leadEmail" placeholder="your@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="leadCity">City *</label>
+                                <input type="text" id="leadCity" required placeholder="e.g., Nagpur">
+                            </div>
+                        </div>
+
+                        <!-- Two column grid for value and source -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label for="leadValue">Value *</label>
+                                <input type="number" id="leadValue" required placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="leadSource">Source *</label>
+                                <select id="leadSource" required>
+                                    <option value="">Select Source</option>
+                                    <option value="Website Form">Website Form</option>
+                                    <option value="Google Ads">Google Ads</option>
+                                    <option value="Referral">Referral</option>
+                                    <option value="Direct Call">Direct Call</option>
+                                    <option value="Manual Entry">Manual Entry</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Two column grid for stage and priority -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="leadStage">Stage *</label>
+                                <select id="leadStage" required>
+                                    <option value="">Select Stage</option>
+                                    <option value="New Lead">New Lead</option>
+                                    <option value="Qualified">Qualified</option>
+                                    <option value="Proposal">Proposal</option>
+                                    <option value="Negotiation">Negotiation</option>
+                                    <option value="Closed Won">Closed Won</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="leadPriority">Priority *</label>
+                                <select id="leadPriority" required>
+                                    <option value="">Select Priority</option>
+                                    <option value="Hot">Hot</option>
+                                    <option value="Warm">Warm</option>
+                                    <option value="Cold">Cold</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assign To Caller Section -->
+                    <div style="margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label for="leadAssignedCaller">Assign To Caller</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <select id="leadAssignedCaller" style="flex: 1;">
+                                    <option value="">-- Not Assigned --</option>
+                                </select>
+                                <button type="button" class="btn-auto-assign" onclick="autoAssignCurrentLead()" id="autoAssignBtn" title="Auto-assign to next available caller">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2v6m0 4v6"></path>
+                                        <path d="M4.22 10.22l4.24-4.24m0 8.48l-4.24-4.24M19.78 10.22l-4.24-4.24m0 8.48l4.24-4.24"></path>
+                                    </svg>
+                                    Auto-Assign
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Added missing form fields for Project, Lead Status, Next Follow, and Next Follow Date -->
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label for="leadProject">Project</label>
+                                <input type="text" id="leadProject" placeholder="e.g., Mauli town 21">
+                            </div>
+                            <div class="form-group">
+                                <label for="leadLeadStatus">Lead Status</label>
+                                <select id="leadLeadStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                    <option value="Paused">Paused</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="leadNextFollow">Next Follow Up (Action)</label>
+                                <input type="text" id="leadNextFollow" placeholder="e.g., Send proposal">
+                            </div>
+                            <div class="form-group">
+                                <label for="leadNextFollowDate">Next Follow Up Date & Time</label>
+                                <input type="datetime-local" id="leadNextFollowDate">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <!-- Updated button styling and removed hidden auto-assign button -->
+                    <button type="button" class="btn btn-secondary" onclick="closeLeadModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lead Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content" style="width: 700px;">
+            <div class="modal-header">
+                <div>
+                    <h2 id="detailsTitle">Lead Details</h2>
+                    <p id="detailsEmail" style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.25rem 0 0 0;">email@example.com</p>
+                </div>
+                <button class="modal-close" onclick="closeDetailsModal()">✕</button>
+            </div>
+
+            <!-- Added three status buttons section with Interested, Callback, Not Interested options -->
+            <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: #f8fafc;">
+                <p style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 1rem 0; letter-spacing: 0.05em;">Lead Status</p>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <button class="status-btn interested" onclick="updateLeadStatus('Interested')" title="Mark as Interested">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Interested
+                    </button>
+                    <button class="status-btn callback" onclick="updateLeadStatus('Callback')" title="Schedule Callback">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        Callback
+                    </button>
+                    <button class="status-btn not-interested" onclick="updateLeadStatus('Not Interested')" title="Mark as Not Interested">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        Not Interested
+                    </button>
+                </div>
+            </div>
+
+            <div class="details-content">
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <label>Name</label>
+                        <p id="detailContact">Contact Name</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Phone Number</label>
+                        <p id="detailPhone">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>City</label>
+                        <p id="detailCity">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Deal Value</label>
+                        <p id="detailValue">₹0</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Source</label>
+                        <p id="detailSource">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Stage</label>
+                        <p id="detailStage">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Priority</label>
+                        <p id="detailPriority">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Assigned Caller</label>
+                        <p id="detailAssignedCaller">Not Assigned</p>
+                    </div>
+                    <div class="detail-item full-width">
+                        <label>Created Date</label>
+                        <p id="detailCreatedAt">-</p>
+                    </div>
+                    <!-- Added new details for Project, Lead Status, Next Follow, Next Follow Date -->
+                    <div class="detail-item">
+                        <label>Project</label>
+                        <p id="detailProject">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Lead Status</label>
+                        <p id="detailLeadStatus">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Next Follow</label>
+                        <p id="detailNextFollow">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Next Follow Date & Time</label>
+                        <p id="detailNextFollowDate">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
+                <button class="btn btn-primary" onclick="editCurrentLead()">Edit</button>
+                <button class="btn btn-danger" onclick="deleteLead()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal with Column Mapping -->
+    <div id="importModal" class="modal">
+        <div class="modal-content" style="width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>Import Leads from Excel/CSV/Google Sheets</h2>
+                <button class="modal-close" onclick="closeImportModal()">✕</button>
+            </div>
+            <div class="import-content">
+                <!-- Step 1: File Upload -->
+                <div id="uploadStep" style="display: block;">
+                    <div class="upload-zone" id="uploadZone" ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 3 12 8 17 3"></polyline>
+                            <line x1="12" y1="8" x2="12" y2="21"></line>
+                        </svg>
+                        <p>Drag and drop your file here or <label style="cursor: pointer; color: #3b82f6; text-decoration: underline;">browse
+                            <input type="file" id="excelFileInput" style="display: none;" onchange="handleFileSelect(event)" accept=".csv,.xlsx,.xls">
+                        </label></p>
+                        <small>Supported formats: CSV, XLSX, XLS, Google Sheets (export as CSV)</small>
+                    </div>
+                    <button type="button" class="btn btn-text" onclick="downloadTemplate()" style="margin-top: 1rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 3 12 8 17 3"></polyline>
+                            <line x1="12" y1="8" x2="12" y2="21"></line>
+                        </svg>
+                        Download Template
+                    </button>
+                </div>
+
+                <!-- Step 2: Column Mapping -->
+                <div id="mappingStep" style="display: none;">
+                    <h3 style="margin-bottom: 1rem;">Match Your Columns to Lead Fields</h3>
+                    <p style="color: #64748b; margin-bottom: 1.5rem;">Your file has these columns. Map them to the corresponding lead fields:</p>
+                    
+                    <!-- Add source selection for imports -->
+                    <div style="background: #f0f9ff; border: 1px solid #93c5fd; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0c4a6e;">Import Source *</label>
+                        <p style="font-size: 13px; color: #0c4a6e; margin-bottom: 0.75rem;">Where are these leads coming from?</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 2px solid #93c5fd; border-radius: 0.375rem; cursor: pointer; transition: all 0.2s;">
+                                <input type="radio" name="importSource" value="Excel Sheet" required onchange="this.parentElement.style.borderColor = this.querySelector('input:checked') ? '#3b82f6' : '#93c5fd'"> 
+                                <span style="font-size: 14px; font-weight: 500;">📊 Excel Sheet</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 2px solid #93c5fd; border-radius: 0.375rem; cursor: pointer; transition: all 0.2s;">
+                                <input type="radio" name="importSource" value="Google Sheet" required onchange="this.parentElement.style.borderColor = this.querySelector('input:checked') ? '#3b82f6' : '#93c5fd'"> 
+                                <span style="font-size: 14px; font-weight: 500;">🔗 Google Sheet</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 2px solid #93c5fd; border-radius: 0.375rem; cursor: pointer; transition: all 0.2s;">
+                                <input type="radio" name="importSource" value="CSV File" required onchange="this.parentElement.style.borderColor = this.querySelector('input:checked') ? '#3b82f6' : '#93c5fd'"> 
+                                <span style="font-size: 14px; font-weight: 500;">📄 CSV File</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="columnMappingTable" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 0.5rem;">
+                        <!-- Mapping rows will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Step 3: Preview -->
+                <div id="previewStep" style="display: none;">
+                    <h3>Preview (<span id="previewCount">0</span> leads)</h3>
+                    <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 0.5rem;">
+                        <table class="import-preview-table">
+                            <thead id="previewTableHead"></thead>
+                            <tbody id="previewTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- Upload Step Buttons -->
+                <div id="uploadStepBtns" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
+                </div>
+                
+                <!-- Mapping Step Buttons -->
+                <div id="mappingStepBtns" style="display: none; gap: 0.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="goBackToUpload()">Back</button>
+                    <button type="button" class="btn btn-primary" onclick="goToPreview()">Preview Data</button>
+                </div>
+                
+                <!-- Preview Step Buttons -->
+                <div id="previewStepBtns" style="display: none; gap: 0.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="goBackToMapping()">Back</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmImport()">Import Leads</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call Back Details Modal -->
+    <div id="callbackModal" class="modal">
+        <div class="modal-content" style="width: 500px;">
+            <div class="modal-header">
+                <h2>Call Back Details</h2>
+                <button class="modal-close" onclick="closeCallbackModal()">✕</button>
+            </div>
+            <div style="padding: 1.5rem;">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Call Back Reason *</label>
+                    <select id="callbackReason" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.95rem;">
+                        <option value="">-- Select Reason --</option>
+                        <option value="On Request">On Request</option>
+                        <option value="Not Picked">Not Picked</option>
+                        <option value="Not Reachable">Not Reachable</option>
+                        <option value="Switched Off">Switched Off</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Next Follow Up On</label>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <input type="date" id="callbackDate" style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.95rem;">
+                        <input type="time" id="callbackTime" style="flex: 0.8; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.95rem;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Note</label>
+                    <textarea id="callbackNote" placeholder="Enter Note" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.95rem; min-height: 100px; resize: vertical; font-family: inherit;"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeCallbackModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCallback()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Not Interested Details Modal -->
+    <div id="notInterestedModal" class="modal">
+        <div class="modal-content" style="width: 500px;">
+            <div class="modal-header">
+                <h2>Not Interested Details</h2>
+                <button class="modal-close" onclick="closeNotInterestedModal()">✕</button>
+            </div>
+            <div style="padding: 1.5rem;">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Not Interested Reason *</label>
+                    <select id="notInterestedReason" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.95rem;">
+                        <option value="">-- Select Reason --</option>
+                        <option value="Low Budget">Low Budget</option>
+                        <option value="Not A Property Seeker">Not A Property Seeker</option>
+                        <option value="Location Mismatch">Location Mismatch</option>
+                        <option value="DND">DND</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem;">Note</label>
+                    <textarea id="notInterestedNote" placeholder="Enter Note" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.95rem; min-height: 100px; resize: vertical; font-family: inherit;"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeNotInterestedModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveNotInterested()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/leads.js') }}"></script>
+
+{% endblock %}
